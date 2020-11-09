@@ -1,10 +1,10 @@
+
 from time import sleep
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-
-
+#the different data & values will be added to these lists.
 name = []
 position = []
 rank = []
@@ -12,16 +12,22 @@ age = []
 country = []
 club = []
 value = []
+
+#there are total 20 pages of data which we need in this case, hence we take i in range(21).
 for i in range(1,21):
-    headers = {'User-Agent':
-                   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+    #without the 'header' parameter the code seems to be not working!
+    headers = {'User-Agent': 'tmscraper_v_1'}
     page = f"https://www.transfermarkt.co.uk/spieler-statistik/wertvollstespieler/marktwertetop?ajax=yw1&page={i}"
     print(f'scraping page {i} of 20...')
+    
     response = requests.get(page, headers=headers)
-    print(f'status code: {response.status_code}')
+    print(f'status code of page {i}: {response.status_code}')
+    
     soup = BeautifulSoup(response.content, 'html.parser')
-    d = soup.find(class_='responsive-table').find('tbody').select('.odd, .even')
-    for p in d:
+    data = soup.find(class_='responsive-table').find('tbody').select('.odd, .even')
+    
+    #appending all the different aspects of a player to appropriate lists.
+    for p in data:
         name.append(p.table.find(class_='hauptlink').find('a').get_text())
         position.append(p.table.find_all('tr')[1].get_text())
         rank.append(p.find(class_='zentriert').get_text())
@@ -30,8 +36,7 @@ for i in range(1,21):
         club.append(p.select('td.zentriert')[3].find('a').find('img')['alt'])
         value.append(p.find_all(class_='hauptlink')[1].get_text())
     sleep(3)
-
-
+#Turning & combining the lists into a dataframe.
 df = pd.DataFrame({
     'Rank': rank,
     'Name': name,
@@ -41,5 +46,6 @@ df = pd.DataFrame({
     'club': club,
     'Value': value})
 
+#Saving the dataframe as a csv file.
 df.to_csv('Most_Valuable_players_8-20.csv', index=False)
 print(df.info())
